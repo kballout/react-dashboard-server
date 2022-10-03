@@ -1,7 +1,10 @@
 const express = require('express')
+const StoredSession = require('../models/StoredSession')
 const authClient = require('../modules/authClient')
 const router = express.Router()
+const { getSession, getUserData } = require('../modules/sessions')
 require('dotenv').config()
+
 
 router.get('/login', (req, res) => {
     console.log('attempt to login');
@@ -9,17 +12,18 @@ router.get('/login', (req, res) => {
 })
 
 router.post('/code', async (req, res) => {
+    res.header('Access-Control-Allow-Credentials', true);
+    res.setHeader('Content-Type', 'application/json');
     try{
         console.log('try auth');
         const code = JSON.parse(req.body.data)
-        const key =  await authClient.getAccess(code.toString()).then((resp) => {
-            console.log(resp);
-        }).catch((err) => {console.log(err);})
-        console.log(key);
-        if(key){
-            res.cookie.set('key', key);
-            console.log(key);
-            res.status(200).json({msg: true})
+        let result = await getSession(code)
+        if(result){
+            res.cookie('code', code);
+            let data = await getUserData(result)
+            res.status(200).json({msg: true, data})
+        } else{
+            res.status(401).json({msg: false})
         }
     }
     catch{

@@ -3,16 +3,23 @@ const cookies = require('cookies')
 require('dotenv').config()
 var cors = require('cors')
 const app = express()
-app.use(cors({origin: 'http://localhost:3000'}))
+
+app.use(cors({origin: 'http://localhost:3000', credentials: true}))
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json())
+const mongoose = require('mongoose')
 
 
-app.use(cookies.express('a','b','c'))
 const authRoutes = require('./routes/authRoutes')
-const { json } = require('stream/consumers')
-//
+
 app.use('/auth', authRoutes)
+
+
+//connect db
+mongoose.connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+}).then(console.log('connected to db'))
 
 app.listen(3001, () => {
     console.log('server started on port 3001');
