@@ -12,6 +12,14 @@ const schema = new mongoose.Schema({
     userID: {
         type: String,
         required: true
+    },
+    refreshToken: {
+        type: String,
+        required: true
+    },
+    expires: {
+        type: String,
+        required: true
     }
 })
 

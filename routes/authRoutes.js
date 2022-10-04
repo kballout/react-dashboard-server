@@ -1,8 +1,9 @@
 const express = require('express')
 const StoredSession = require('../models/StoredSession')
 const authClient = require('../modules/authClient')
+const { setHeaders } = require('../modules/middleware')
 const router = express.Router()
-const { getSession, getUserData } = require('../modules/sessions')
+const { getSession, getUserData, endSession } = require('../modules/sessions')
 require('dotenv').config()
 
 
@@ -11,24 +12,43 @@ router.get('/login', (req, res) => {
     res.status(200).json({redirect: `https://discord.com/api/oauth2/authorize?client_id=${process.env.CLIENT_ID}&redirect_uri=${process.env.DASHBOARD_URL}/auth&response_type=code&scope=identify guilds&prompt=none` })
 })
 
-router.post('/code', async (req, res) => {
-    res.header('Access-Control-Allow-Credentials', true);
-    res.setHeader('Content-Type', 'application/json');
+router.post('/code', setHeaders, async (req, res) => {
     try{
         console.log('try auth');
         const code = JSON.parse(req.body.data)
         let result = await getSession(code)
-        if(result){
+        if(result === 'relogin'){
+            await endSession(code)
+            res.clearCookie('code')
+            console.log('sending relogin msg');
+            res.status(401).json({msg: 'relogin'})
+        }
+        else if(result && result !== 'relogin'){
             res.cookie('code', code);
             let data = await getUserData(result)
-            res.status(200).json({msg: true, data})
-        } else{
-            res.status(401).json({msg: false})
+            if(data){
+                console.log('sending success msg');
+                res.status(200).json({msg: 'success', data})
+            } else{
+                console.log('sending failed msg');
+                res.status(401).json({msg: 'failed to get user data'})
+            }
+        } else if(!result){
+            console.log('unauthorized');
+            res.status(401).json({msg: 'relogin'})
         }
     }
     catch{
-        res.status(401).json({msg: false})
+        console.log('error msg');
+        res.status(401).json({msg: 'error'})
     }
 });
+
+router.post('/logout', setHeaders, async (req, res) => {
+    const code = req.cookies['code']
+    await endSession(code)
+    res.clearCookie('code')
+    res.status(200).json({msg: true})
+})
 
 module.exports = router

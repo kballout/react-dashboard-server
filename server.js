@@ -1,5 +1,5 @@
 const express = require('express')
-const cookies = require('cookies')
+const cookies = require('cookie-parser')
 require('dotenv').config()
 var cors = require('cors')
 const app = express()
@@ -7,6 +7,8 @@ const app = express()
 app.use(cors({origin: 'http://localhost:3000', credentials: true}))
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json())
+app.use(cookies())
+
 const mongoose = require('mongoose')
 
 

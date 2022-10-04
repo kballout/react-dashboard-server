@@ -1,7 +1,9 @@
-const OAuthClient = require('disco-oauth');
-const client = new OAuthClient(process.env.CLIENT_ID, process.env.CLIENT_SECRET)
+const OAuthClient = require('discord-oauth2')
 
-client.setRedirect(`${process.env.DASHBOARD_URL}/auth`);
-client.setScopes('identify', 'guilds');
+const client = new OAuthClient({
+    clientId: process.env.CLIENT_ID,
+    clientSecret: process.env.CLIENT_SECRET,
+    redirectUri: `${process.env.DASHBOARD_URL}/auth`,
+})
 
 module.exports = client;
