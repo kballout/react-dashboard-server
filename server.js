@@ -13,8 +13,10 @@ const mongoose = require('mongoose')
 
 
 const authRoutes = require('./routes/authRoutes')
+const dashboardRoutes = require('./routes/dashboardRoutes')
 
 app.use('/auth', authRoutes)
+app.use('/dashboard', dashboardRoutes)
 
 
 //connect db
@@ -26,3 +28,6 @@ mongoose.connect(process.env.MONGO_URI, {
 app.listen(3001, () => {
     console.log('server started on port 3001');
 })
+
+
+

@@ -2,6 +2,8 @@ const StoredSession = require('../models/StoredSession')
 const authClient = require('./authClient')
 const bot = require('../bot')
 const {PermissionsBitField} = require('discord.js')
+const DB = require('../modules/mongodb')
+const mongo = new DB()
 
 const getSession = async (code) => {
     let session = await StoredSession.findById(code)
@@ -45,7 +47,10 @@ const saveSession = async (code, key) => {
         return null
     }
     //remove any existing codes
-    await StoredSession.deleteMany({userID: userID.id})
+    let oldSession = await StoredSession.findOne({userID: userID.id})
+    if(oldSession){
+        await endSession(oldSession._id)
+    }
     const session = new StoredSession({
         _id: code,
         accessToken: key.access_token,
@@ -89,7 +94,7 @@ const getUserData = async(session) => {
         console.log(error);
     }
     if(authUser && authGuilds){
-        console.log('got user data');
+        console.log('getting user data');
         const guilds = []
         let isManager, guild, permissions
         for(const next of authGuilds){
@@ -98,10 +103,19 @@ const getUserData = async(session) => {
                 permissions = new PermissionsBitField(next.permissions)
                 isManager = permissions.has('ManageGuild')
                 if(isManager){
+                    guild['exists'] = await mongo.checkIfExists(guild.id)
+                    const guildData = await mongo.getAllGuildData(guild.id)
+                    guild['guildSettings'] = {}
+                    guild['guildSettings'].general = {'general' : guildData.general}
+                    guild['guildSettings'].programs = {'programs' : guildData.programs}
+                    guild['guildSettings'].teams = {'teams' : guildData.teams}
+                    guild['guildSettings'].stores = {'stores': guildData.stores}
+                    guild['guildSettings'].emblems = {'emblems': guildData.emblems}
                     guilds.push(guild)
                 }
             }
         }
+        console.log('returning guilds');
         return {authUser, guilds}
     }
     return null

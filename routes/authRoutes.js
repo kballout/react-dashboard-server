@@ -20,26 +20,21 @@ router.post('/code', setHeaders, async (req, res) => {
         if(result === 'relogin'){
             await endSession(code)
             res.clearCookie('code')
-            console.log('sending relogin msg');
             res.status(401).json({msg: 'relogin'})
         }
         else if(result && result !== 'relogin'){
             res.cookie('code', code);
             let data = await getUserData(result)
             if(data){
-                console.log('sending success msg');
                 res.status(200).json({msg: 'success', data})
             } else{
-                console.log('sending failed msg');
                 res.status(401).json({msg: 'failed to get user data'})
             }
         } else if(!result){
-            console.log('unauthorized');
             res.status(401).json({msg: 'relogin'})
         }
     }
     catch{
-        console.log('error msg');
         res.status(401).json({msg: 'error'})
     }
 });
